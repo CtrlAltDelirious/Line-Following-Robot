@@ -1,0 +1,196 @@
+// Library for the HC-SR04 sensor
+#include "NewPing.h"
+// Motor A connections (left)
+int enA = 9;
+int in1 = 8;
+int in2 = 7;
+// Motor B connections (right)
+int enB = 3;
+int in3 = 5;
+int in4 = 4;
+//Colour sensor connections
+int S0 = 10;
+int S1 = 11;
+int S2 = 12;
+int S3 = 13;
+int sensorM = A1;
+int sensorL = A0;
+int sensorR = A2;
+// Stores frequency read by the photodiodes
+int FrequencyM = 0;
+int FrequencyL = 0;
+int FrequencyR = 0;
+// HC-SR04 connections
+int TRIGGER_PIN = 1;
+int ECHO_PIN = 0;
+// Maximum distance we want to ping for (in centimeters).
+int MAX_DISTANCE = 15;
+// NewPing setup of pins and maximum distance.
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+int dist = 0;
+
+void setup() {
+	// Set all the motor control pins to outputs
+	pinMode(enA, OUTPUT);
+	pinMode(enB, OUTPUT);
+	pinMode(in1, OUTPUT);
+	pinMode(in2, OUTPUT);
+	pinMode(in3, OUTPUT);
+	pinMode(in4, OUTPUT);
+
+  // Turn off motors - Initial state
+	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	digitalWrite(in3, LOW);
+	digitalWrite(in4, LOW);
+  
+  // Colour sensor setting pins
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+
+  // Setting the outputs of the colour sensors as an inputs to be read from
+  pinMode(sensorM, INPUT);
+  pinMode(sensorL, INPUT);
+  pinMode(sensorR, INPUT);
+
+  // Setting frequency scaling to 20%
+  digitalWrite(S0,HIGH);
+  digitalWrite(S1,LOW);
+  // Setting GREEN (G) filtered photodiodes to be read
+  digitalWrite(S2,HIGH);
+  digitalWrite(S3,HIGH);
+}
+
+void loop() {
+  // Sequentially reads the frequency values of each of the colour sensors
+	FrequencyM = pulseIn(sensorM, LOW);
+  FrequencyL = pulseIn(sensorL, LOW);
+  FrequencyR = pulseIn(sensorR, LOW);
+  // When the middle colour sensor detects the colour black
+  if (FrequencyM > 14) {
+    // The robot starts to move forwards
+    speedControl();
+  // When the left colour sensor detects the colour black
+  } else if (FrequencyL > 14) {
+      // The robot turns left until the middle colour sensor detects the colour black
+      while (FrequencyM < 14 and FrequencyL > 14) {
+        turnLeft();
+        // Keep checking the value of the middle colour sensor
+        FrequencyM = pulseIn(sensorM, LOW);
+      }
+  // When the right colour sensor detects the colour black  
+  } else if (FrequencyR > 14) {
+      // The robot turns left until the middle colour sensor detects the colour black
+      while (FrequencyM < 14 and FrequencyR > 14) {
+        turnRight();
+        // Keep checking the value of the middle colour sensor
+        FrequencyM = pulseIn(sensorM, LOW);
+      }
+  } else {
+      // If all 3 colour sensors detect the colour white, turn off the motors
+      off();
+  }
+  // Check if there is an object within 15cm
+  dist = sonar.ping_cm();
+  // When an object is detected within 15cm
+  if (dist > 0) {
+    // Procedure to go around the object by turning right, forward, then left all slowly
+    slowRight();
+    delay(600);
+    slow();
+    delay(1000);
+    slowLeft();
+    delay(1000);
+    slow();
+    delay(1000);
+    // Keep going forward slowly until the black line is detected again, then restart the main loop
+    while (FrequencyM < 14 and FrequencyL < 14) {
+      slow();
+    }
+  }
+}
+
+// This function lets you control speed of the motors
+void speedControl() {
+	// Turn on motors
+	digitalWrite(in1, HIGH);
+	digitalWrite(in2, LOW);
+	digitalWrite(in3, HIGH);
+	digitalWrite(in4, LOW);
+	
+	// Accelerate from zero to maximum speed
+	for (int i = 0; i < 130; i++) {
+		analogWrite(enA, i);
+		analogWrite(enB, i);
+	}
+}
+
+// Function to move forward slower
+void slow() {
+	// Turn on motors
+	digitalWrite(in1, HIGH);
+	digitalWrite(in2, LOW);
+	digitalWrite(in3, HIGH);
+	digitalWrite(in4, LOW);
+	
+	// Accelerate from zero to maximum speed
+	for (int i = 0; i < 70; i++) {
+		analogWrite(enA, i);
+		analogWrite(enB, i);
+	}
+}
+
+// Turns off the motors
+void off() {
+	digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	digitalWrite(in3, LOW);
+	digitalWrite(in4, LOW);
+}
+
+// Turns the robot right
+void turnRight() {
+  // Sets the right motor to go forwards, and the left motor to turn backwards
+  digitalWrite(in1, HIGH);
+	digitalWrite(in2, LOW);
+	digitalWrite(in3, LOW);
+	digitalWrite(in4, LOW);
+  // Sets the right motor to spin faster and the left motor to stop
+	analogWrite(enA, 200);
+  analogWrite(enB, 0);
+}
+
+// Slower version of turnRight()
+void slowRight() {
+  digitalWrite(in1, HIGH);
+	digitalWrite(in2, LOW);
+	digitalWrite(in3, LOW);
+	digitalWrite(in4, LOW);
+	analogWrite(enA, 100);
+  analogWrite(enB, 70);
+}
+
+// Turns the robot left
+void turnLeft() {
+  // Sets the left motor to go forwards, and the right motor to turn backwards
+  digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	digitalWrite(in3, HIGH);
+	digitalWrite(in4, LOW);
+  // Sets the left motor to spin faster and the right motor to stop
+	analogWrite(enA, 0);
+  analogWrite(enB, 200);
+}
+
+// Slower version of turnLeft()
+void slowLeft() {
+  digitalWrite(in1, LOW);
+	digitalWrite(in2, LOW);
+	digitalWrite(in3, HIGH);
+	digitalWrite(in4, LOW);
+
+	analogWrite(enA, 70);
+  analogWrite(enB, 100);
+}
