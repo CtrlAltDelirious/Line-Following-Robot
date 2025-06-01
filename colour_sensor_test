@@ -1,0 +1,83 @@
+// TCS230 or TCS3200 pins wiring to Arduino
+#define S0 10
+#define S1 11
+#define S2 12
+#define S3 13
+#define sensorM A1
+#define sensorL A0
+#define sensorR A2
+
+// Stores frequency read by the photodiodes
+int FrequencyM = 0;
+int FrequencyL = 0;
+int FrequencyR = 0;
+
+void setup() {
+  // Setting the outputs
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+  
+  // Setting the sensorOut as an input
+  pinMode(sensorM, INPUT);
+  pinMode(sensorL, INPUT);
+  pinMode(sensorR, INPUT);
+  // Setting frequency scaling to 20%
+  digitalWrite(S0,HIGH);
+  digitalWrite(S1,LOW);
+  
+  // Begins serial communication
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Setting GREEN (G) filtered photodiodes to be read
+  digitalWrite(S2,HIGH);
+  digitalWrite(S3,HIGH);
+  
+  // Reading the output frequency
+  FrequencyM = pulseIn(sensorM, LOW);
+  FrequencyL = pulseIn(sensorL, LOW);
+  FrequencyR = pulseIn(sensorR, LOW);
+  // Remaping the value of the GREEN (G) frequency from 0 to 255
+  // You must replace with your own values. Here's an example: 
+  // greenColor = map(greenFrequency, 100, 199, 255, 0);
+  
+  // Printing the GREEN (G) value  
+  Serial.print(" M = ");
+  Serial.print(FrequencyM);
+  Serial.print(" Line = ");
+  // Checks the current detected color and prints
+  // a message in the serial monitor
+  if(FrequencyM > 30){
+      Serial.println(" - LINE detected!");
+  } else {
+      Serial.println(" - WHITE detected!");
+  }
+  delay(1000);
+
+  Serial.print(" L = ");
+  Serial.print(FrequencyL);
+  Serial.print(" Line = ");
+  // Checks the current detected color and prints
+  // a message in the serial monitor
+  if(FrequencyL > 30){
+      Serial.println(" - LINE detected!");
+  } else {
+      Serial.println(" - WHITE detected!");
+  }
+  delay(1000);
+
+  Serial.print(" R = ");
+  Serial.print(FrequencyR);
+  Serial.print(" Line = ");
+  // Checks the current detected color and prints
+  // a message in the serial monitor
+  if(FrequencyR > 30){
+      Serial.println(" - LINE detected!");
+  } else {
+      Serial.println(" - WHITE detected!");
+  }
+  delay(100);
+}
